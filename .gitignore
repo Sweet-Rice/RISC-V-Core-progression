@@ -1,0 +1,40 @@
+# Vivado project and generated directories
+.Xil/
+*.cache/
+*.gen/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.srcs/
+xsim.dir/
+
+# Vivado project and session files
+*.xpr
+*.lpr
+vivado*.jou
+vivado*.log
+vivado*.str
+webtalk*.jou
+webtalk*.log
+webtalk*.xml
+usage_statistics_webtalk.xml
+
+# Generated reports, databases, and checkpoints
+*.dcp
+*.pb
+*.rpt
+*.rpx
+*.vdi
+*.vds
+*.wdb
+*.wcfg
+xsim*.ini
+
+# Generated programming files
+*.bit
+*.bin
+*.hwh
+*.ltx
+*.mcs
+*.prm
