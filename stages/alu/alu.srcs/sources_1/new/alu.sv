@@ -27,8 +27,9 @@ output logic [W-1:0]result
     );
     
     
-    logic [W-1:0] sh_in, sh_out, rev_a, rev_out;
+    logic [W-1:0] sh_in, sh_out, rev_a, rev_out, core_result;
     logic [W-1:0] sum; logic ltu, lt; //adder wires
+    logic invalid_op;
 
     genvar i;
     generate                                // should be cheap. just 64 wires.
@@ -43,22 +44,25 @@ output logic [W-1:0]result
     
     shifter_op #(W) sh (sh_in, b[4:0], (op[3] & a[W-1]), sh_out);
     addsub #(W) addsub (a, b, op[3] | op[1], sum, lt, ltu);
+
+
+    assign invalid_op = op[3] & (op[1] | (op[2] ^ op[0])); //check for invalid
     always_comb begin
-        case (op)
-            4'b0000: result = sum;                          // add
-            4'b1000: result = sum;                          // sub
-            4'b0001: result = rev_out;                      // sll
-            4'b0010: result = {{W-1{1'b0}}, lt};            // slt
-            4'b0011: result = {{W-1{1'b0}}, ltu};           // sltu
-            4'b0100: result = a ^ b;                        // xor
-            4'b0101: result = sh_out;                       // srl
-            4'b1101: result = sh_out;                       // sra
-            4'b0110: result = a | b;                        // or
-            4'b0111: result = a & b;                        // and
-            default: result = '1;
+        case (op[2:0])
+            3'b000: core_result = sum;                          // add and sub, sub has op[3]
+            //3'b000: core_result = sum;                          // sub
+            3'b001: core_result = rev_out;                      // sll
+            3'b010: core_result = {{W-1{1'b0}}, lt};            // slt
+            3'b011: core_result = {{W-1{1'b0}}, ltu};           // sltu
+            3'b100: core_result = a ^ b;                        // xor
+            3'b101: core_result = sh_out;                       // srl and sra, sra has op[3]
+            //3'b101: core_result = sh_out;                       // sra
+            3'b110: core_result = a | b;                        // or
+            3'b111: core_result = a & b;                        // and
+            default: core_result = '1;
         endcase 
     end
     
-    
+    assign result = core_result | {W{invalid_op}}; //if invalid, mask entire value to 1
 endmodule
 
