@@ -93,3 +93,19 @@ Post-synthesis, unconstrained, `report_timing -from [all_inputs] -to [all_output
 every LUT costs 0.124 ns, every net costs 0.4 to 0.9 ns. routing is more than half the delay.
 
 critical path isnt data through the adder, its op[3] fanning out to 155 places. it drives the result mux, the addsub subtract input, the shifter fill AND, and the sh_in reversal mux. carry chain doesnt show up in the top 10 paths at all.
+
+
+also,
+
+```
+ALU testbench, W=32
+surgical done: 85 checks, 0 errors
+INFO: [USF-XSim-96] XSim completed. Design snapshot 'alu_tb_behav' loaded.
+INFO: [USF-XSim-97] XSim simulation ran for 1000ns
+run all
+=== 22085 checks, 0 errors ===
+PASS
+$finish called at time : 22085 ns : File "C:/Users/peyto/vivado_projects/stages/alu/alu.srcs/sim_1/new/alu_tb.v" Line 190
+```
+
+[alu waveform!](./alu-waveform.png)
