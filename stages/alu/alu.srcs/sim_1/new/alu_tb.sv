@@ -24,7 +24,11 @@ module alu_tb;
 
     localparam int W = 32;
     localparam int RANDOM_VECTORS = 2000;
-    
+    localparam logic [3:0] OPS [0:9] = '{
+        4'b0000, 4'b1000, 4'b0001, 4'b0010, 4'b0011,
+        4'b0100, 4'b0101, 4'b1101, 4'b0110, 4'b0111
+    };
+
     logic [W-1:0] a, b, result;
     logic [3:0] op;
     
@@ -150,13 +154,7 @@ module alu_tb;
         check({1'b1, {W-1{1'b0}}}, {{W-1{1'b0}}, 1'b1}, 4'b1000, "sub min-1 wraps");
         check('0,                  {{W-1{1'b0}}, 1'b1}, 4'b1000, "sub 0-1");
  
-        // pray none of this works. fake ops RIGHT NOW. but actually the alu should never get these 
-        check('1, '1, 4'b1001, "undefined 1001");
-        check('1, '1, 4'b1010, "undefined 1010");
-        check('1, '1, 4'b1011, "undefined 1011");
-        check('1, '1, 4'b1100, "undefined 1100");
-        check('1, '1, 4'b1110, "undefined 1110");
-        check('1, '1, 4'b1111, "undefined 1111");
+        
  
         $display("surgical done: %0d checks, %0d errors", checks, errors);
  
@@ -177,7 +175,7 @@ module alu_tb;
             sweep(ra, rb, "random");
  
             // hit some stupid stuff occasionally
-            rop = $urandom_range(0, 15);
+            rop = OPS[$urandom_range(0, 9)];
             check(ra, rb, rop, "random op");
         end
  

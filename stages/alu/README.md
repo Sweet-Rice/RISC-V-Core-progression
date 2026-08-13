@@ -105,7 +105,44 @@ INFO: [USF-XSim-97] XSim simulation ran for 1000ns
 run all
 === 22085 checks, 0 errors ===
 PASS
-$finish called at time : 22085 ns : File "C:/Users/peyto/vivado_projects/stages/alu/alu.srcs/sim_1/new/alu_tb.v" Line 190
+
 ```
 
+
+
+### Update:
+Upon further review,  improvements can be made. The ALU already filters for op[3] and handles it appropriately, so including that bit in the mux is wasting a lot of space.
+
+ After validating inputs, our new LUT count is:
+ | | |
+|---|---|
+|LUT6 | 181|
+|LUT5 |  12|
+|LUT4 |  40|
+|LUT3 |  26|
+|LUT2 |   1|
+|total| 260|
+
+ Which, shaves off 52 LUTs from 312.
+  Actually, if we keep approaching this from a minimum responsibility angle, we dont even need to validate opcodes.
+  Modifying the testbench accordingly to account that we never receive bad ops, we pass everything still. Synthesis yields:
+  | | |
+|---|---|
+|LUT6 | 184|
+|LUT5 |  24|
+|LUT4 |  32|
+|LUT3 |   7|
+|LUT2 |   3|
+|total| 250|
+ Shaving off 10 LUTs. So 62 LUTs total!
+ Additionally, a timing test under 8ns budget returned a WNS of +2.078!! Though I will admit, a lot of this is attributed to OOC synthesis, and because of improper version control practices, I cannot replicate this behavior for the other versions. Going forward, going to keep that in mind but we're gonna call this an area win.
+```
+ALU testbench, W=32
+surgical done: 79 checks, 0 errors
+INFO: [USF-XSim-96] XSim completed. Design snapshot 'alu_tb_behav' loaded.
+INFO: [USF-XSim-97] XSim simulation ran for 1000ns
+run all
+=== 22079 checks, 0 errors ===
+PASS
+```
 [alu waveform!](./alu-waveform.png)

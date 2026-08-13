@@ -29,7 +29,7 @@ output logic [W-1:0]result
     
     logic [W-1:0] sh_in, sh_out, rev_a, rev_out, core_result;
     logic [W-1:0] sum; logic ltu, lt; //adder wires
-    logic invalid_op;
+    
 
     genvar i;
     generate                                // should be cheap. just 64 wires.
@@ -46,23 +46,23 @@ output logic [W-1:0]result
     addsub #(W) addsub (a, b, op[3] | op[1], sum, lt, ltu);
 
 
-    assign invalid_op = op[3] & (op[1] | (op[2] ^ op[0])); //check for invalid
+    
     always_comb begin
         case (op[2:0])
-            3'b000: core_result = sum;                          // add and sub, sub has op[3]
-            //3'b000: core_result = sum;                          // sub
-            3'b001: core_result = rev_out;                      // sll
-            3'b010: core_result = {{W-1{1'b0}}, lt};            // slt
-            3'b011: core_result = {{W-1{1'b0}}, ltu};           // sltu
-            3'b100: core_result = a ^ b;                        // xor
-            3'b101: core_result = sh_out;                       // srl and sra, sra has op[3]
-            //3'b101: core_result = sh_out;                       // sra
-            3'b110: core_result = a | b;                        // or
-            3'b111: core_result = a & b;                        // and
-            default: core_result = '1;
+            3'b000: result = sum;                          // add and sub, sub has op[3]
+            //3'b000: result = sum;                          // sub
+            3'b001: result = rev_out;                      // sll
+            3'b010: result = {{W-1{1'b0}}, lt};            // slt
+            3'b011: result = {{W-1{1'b0}}, ltu};           // sltu
+            3'b100: result = a ^ b;                        // xor
+            3'b101: result = sh_out;                       // srl and sra, sra has op[3]
+            //3'b101: result = sh_out;                       // sra
+            3'b110: result = a | b;                        // or
+            3'b111: result = a & b;                        // and
+            default: result = '1;
         endcase 
     end
     
-    assign result = core_result | {W{invalid_op}}; //if invalid, mask entire value to 1
+    
 endmodule
 
