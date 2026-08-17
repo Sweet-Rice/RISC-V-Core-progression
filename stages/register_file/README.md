@@ -1,5 +1,5 @@
 # Stage 2 — Register File
-
+Target: Arty A7 (Artix-7), Vivado, RV32I ALU, purely combinational, parameterized on `W` (default 32).
 ## References
 
 - **UG901** — RAM inference
