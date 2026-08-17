@@ -130,7 +130,10 @@ Cross referencing the docs, looking back and forth, trying to make sense of it a
 just awful. But I learned a few things, and I think I finally stopped looking at muxes like conditional branches.
 This definitely gave me a bigger appreciation for the geniuses that wrote the arch.
 
-I think that I'm probably not going to revisit this for optimization. If I do, it's to reduce a critical path
+ I think that I'm probably not going to revisit this for optimization. If I do, it's to reduce a critical path
 to squeeze this into a particular stage of a pipeline. The only change is to reduce the depth stages and make all the
 necessary muxes completely parallel. Eventually, reduce fanout. I anticipate having to nuke the entire system and logic here
 if condensing for pipelining needs to happen, and I'll just recycle opcode decoding from the decoder and pass that as a signal to the immgen instead, so it'll cost a few input wires but ultimately shave off a good chunk of time.
+
+
+ Also, no waveform here. That would be stupid.
