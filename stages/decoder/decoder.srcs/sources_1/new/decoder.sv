@@ -28,7 +28,7 @@ input clk,
 
 output logic [3:0] alu_ctrl,
 output logic [W-1:0] pc_out,
-output logic illegal_out
+output logic illegal_out, tx
     );
     
     
@@ -81,7 +81,7 @@ output logic illegal_out
     load_store #(.W(W)) ls 
     (.addr(mem_addr), .funct3(inst[14:12]),
     .is_store(is_store), .rst(rst), .mem_valid(mem_valid), .clk(clk),
-    .d_out(mem_out), .d_in(mem_in), .mem_ready(mem_ready), .mem_misaligned(mem_misaligned));
+    .d_out(mem_out), .d_in(mem_in), .mem_ready(mem_ready), .mem_misaligned(mem_misaligned), .tx(tx));
     
     assign pc_out = pc;
     assign illegal_out = illegal_seen;
@@ -245,7 +245,7 @@ output logic illegal_out
          if (rst) illegal_seen <= 1'b0;
         else if (illegal) illegal_seen<=1'b1;
         else illegal_seen <= 1'b0;
-        unique if (rst) begin
+         if (rst) begin
         usable_pc <= RESET_VEC;
         
         end

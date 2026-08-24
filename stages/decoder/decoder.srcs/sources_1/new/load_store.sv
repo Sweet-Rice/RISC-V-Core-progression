@@ -27,7 +27,8 @@ input logic is_store,
 input logic rst, mem_valid, clk,
 input logic [W-1:0] d_in,
 output logic [W-1:0] d_out, 
-output logic mem_ready, mem_misaligned
+output logic mem_ready, mem_misaligned,
+output logic tx
     );
     //if we separate the actions for store and load, we can get single cycle store
     //and double cycle load. load needs to stall, and we design an outstanding state system
@@ -45,53 +46,68 @@ output logic mem_ready, mem_misaligned
 
     logic [2:0] funct3_q;
     logic [1:0] offset_q;   
+    
+    logic sel_uart, sel_dram, sel_q;
+    logic uart_data, uart_stat;
+    assign sel_uart = (addr[31:28] == 4'h1);
+    assign uart_data = sel_uart && ~addr[2];
+    assign uart_stat = sel_uart && addr[2];
+    assign sel_dram = (addr[31:28] == 4'h8);
+    
+    logic start, busy;
+    assign start = (mem_valid && is_store && uart_data);
+   uart uart_d(.clk(clk), .rst(rst), .data_in(d_in[7:0]), .start(start), .busy(busy), .tx(tx));
    
+   logic [3:0] byte_we;
+   logic [W-1:0] d_wr;
+   logic do_write;
    
+   assign do_write = mem_valid && is_store && ~mem_misaligned && sel_dram;
        always_ff @(posedge clk) begin
-       
+       raw <= mem[word_addr];
         if (rst) begin
             load_pending <= 1'b0;
            
         end else begin
-            
-                if (mem_valid && is_store && ~mem_misaligned) begin
-                
-                    //access
-                    case (funct3)
-                        3'b000: begin
-                            case (addr[1:0]) //SB
-                                2'b00: mem[word_addr][7:0] <= d_in[7:0]; 
-                                2'b01: mem[word_addr][15:8] <= d_in[7:0]; 
-                                2'b10: mem[word_addr][23:16] <= d_in[7:0]; 
-                                2'b11: mem[word_addr][31:24] <= d_in[7:0];
-                            endcase 
-                        end
-                        3'b001: begin
-                            case (addr[1:0]) //SH
-                                2'b00:mem[word_addr][15:0] <= d_in[15:0];
-                                2'b10:mem[word_addr][31:16] <=d_in[15:0];
-                                //intentional miss here. we dont want to store a misaligned val
-                            endcase 
-                        end
-                        3'b010: begin //SW
-                            if (addr[1:0] == 2'b00)mem[word_addr] <= d_in;
-                        end
-                    endcase
+               
+                 if (mem_valid && is_store && ~mem_misaligned && sel_dram) begin
+                    for (int i = 0; i < 4; i++)
+                        if (byte_we[i]) mem[word_addr][i*8 +: 8] <= d_wr[i*8 +: 8];
+                   
                
             end
             if (mem_valid && !is_store && !load_pending) begin
                 //here lives logic for the load state
-                if (!mem_misaligned)raw <= mem[word_addr];
+                
                 funct3_q <=funct3;
                 offset_q <= addr[1:0];
                 load_pending <=1'b1;
+                sel_q <= sel_uart;
             end 
             else if (load_pending) begin
                 load_pending <= 1'b0;
             end
         end
        end
-       
+    always_comb begin
+    byte_we = 4'b0000;
+    d_wr = d_in;
+    case (funct3)
+    3'b000: begin
+        byte_we = 4'b0001 << addr[1:0];
+        d_wr = {4{d_in[7:0]}};
+    end   
+    3'b001: begin
+    byte_we = addr[1] ? 4'b1100 : 4'b0011;
+    d_wr = {2{d_in[15:0]}};
+    end
+    3'b010: begin
+    byte_we = 4'b1111;
+    d_wr = d_in;
+    end
+    endcase
+    if (!do_write) byte_we = 4'b0000;
+    end
     always_comb begin
      mem_misaligned = 1'b0;
         
@@ -107,7 +123,7 @@ output logic mem_ready, mem_misaligned
     end
     always_comb begin
         d_out = '0;
-       
+        if (~sel_q) begin
         case (funct3_q)
             3'b000:begin // LB
                 case (offset_q)
@@ -153,7 +169,9 @@ output logic mem_ready, mem_misaligned
                         end
                     endcase
                 end
-            endcase           
+            endcase
+            end else if (sel_q) d_out = {31'b0, busy};
+                       
             end 
         
 endmodule
