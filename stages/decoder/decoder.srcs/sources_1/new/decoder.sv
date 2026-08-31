@@ -54,6 +54,11 @@ output logic illegal_out, tx
     assign usable_rs2 = rs2 & {32{|rs2_addr[4:0]}};    
     alu_decoder  #(32,ALU_ADD)alu_decoder_d (.inst(inst), .alu_ctrl(alu_ctrl));
     
+    // wires for imm sig
+    logic [2:0] imm_sig;
+    //
+    
+    
     logic [W-1:0] alu_a, alu_b, result;
     
     alu #(.W(W)) alu_d (.a(alu_a), .b(alu_b), .op(alu_ctrl), .result(result));
@@ -61,7 +66,7 @@ output logic illegal_out, tx
     //alu_b
     //result
     logic [W-1:0] imm_out;
-    immgen #(.W(32)) immgen_d (.inst(inst), .imm(imm_out));
+    immgen #(.W(32)) immgen_d (.inst(inst),.imm_sig(imm_sig), .imm(imm_out));
     
     logic [W-1:0] pc;
     logic [W-1:0] usable_pc;
@@ -87,6 +92,10 @@ output logic illegal_out, tx
     assign illegal_out = illegal_seen;
 
     always_comb begin
+    
+        //default to U
+        imm_sig = 3'b000;
+        
         //load store stuff
         l_s=1'b0;
         is_store = 1'b0;
@@ -103,15 +112,19 @@ output logic illegal_out, tx
         unique case (inst[6:0])
         //While inst[6:2] would be cheaper, I opted for 6:0 to catch bad ops 
             
-            7'b0110111: begin
-                //LUI
+            7'b0110111: begin //LUI
+                
+                imm_sig = 3'b000; // U type
+                
                 rd = imm_out;
                 r_we = 1;
                 
                 illegal = 1'b0;
             end
-            7'b0010111: begin
-                //AUIPC
+            7'b0010111: begin // AUIPC
+                
+                // U type default
+                
                 alu_a = pc;
                 alu_b = imm_out;
                 rd =result;
@@ -119,8 +132,10 @@ output logic illegal_out, tx
                 
                 illegal = 1'b0;
             end
-            7'b1101111: begin
-                //JAL
+            7'b1101111: begin //JAL
+                
+                imm_sig = 3'b111; // J type
+                
                 alu_a=pc;
                 alu_b = 4;
                 rd = result;
@@ -128,8 +143,10 @@ output logic illegal_out, tx
                 
                 illegal = 1'b0;
             end
-            7'b1100111: begin
-                //JALR
+            7'b1100111: begin // JALR
+                
+                imm_sig = 3'b100; // I type
+                
                 alu_a=pc;
                 alu_b = 4;
                 rd = result;
@@ -137,8 +154,10 @@ output logic illegal_out, tx
                 
                 illegal = 1'b0;
             end
-            7'b1100011: begin
-                //branches
+            7'b1100011: begin //branches
+                
+                imm_sig = 3'b110; // B type
+                
                 unique case (inst[14:13])
                     2'b00: begin
                         //beq, bne
@@ -162,8 +181,9 @@ output logic illegal_out, tx
                 endcase
             
             end
-            7'b0000011: begin
-            //LOAD ops. not implemented yet
+            7'b0000011: begin // LOAD ops
+            imm_sig = 3'b100; // I type
+            
             l_s = 1'b1;
             is_store = 1'b0;
             
@@ -178,8 +198,10 @@ output logic illegal_out, tx
             illegal = 1'b0;
             
             end
-            7'b0100011: begin
-            //STORE ops. not implemented yet
+            7'b0100011: begin //STORE ops.
+            
+            imm_sig = 3'b101; // S type
+             
             l_s = 1'b1;
             is_store = 1'b1;
             alu_a=usable_rs1;
@@ -190,8 +212,10 @@ output logic illegal_out, tx
             
             illegal = 1'b0;
             end
-            7'b0010011: begin
-            //imm-ops.
+            7'b0010011: begin // imm-ops.
+            
+                imm_sig = 3'b100; // I type
+            
                 alu_a = usable_rs1;
                 alu_b = imm_out;
                 rd = result;
@@ -209,8 +233,11 @@ output logic illegal_out, tx
                 */
                 illegal = 1'b0;
             end
-            7'b0110011: begin
-            // register ops
+            7'b0110011: begin // register ops
+            
+            //imm_sig needs to be set explicitly to avoid latching. we default to U
+             
+             
             alu_a = usable_rs1;
             alu_b = usable_rs2;
             rd = result;
@@ -218,14 +245,17 @@ output logic illegal_out, tx
             
             illegal = 1'b0;
             end
-            7'b0001111: begin
-            //FENCE, FENCE.TSO, PAUSE
+            7'b0001111: begin //FENCE, FENCE.TSO, PAUSE
+            
+            //default to U
+            
             
             illegal = 1'b0;
             
             end
-            7'b1110011: begin
-            //ECALL, EBREAK
+            7'b1110011: begin //ECALL, EBREAK
+            
+            
             
             illegal = 1'b0;
             end 
