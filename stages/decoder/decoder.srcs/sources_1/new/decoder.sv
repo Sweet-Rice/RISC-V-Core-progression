@@ -31,12 +31,11 @@ output logic [W-1:0] pc_out,
 output logic illegal_out, tx
     );
     
-    
-    
     logic r_we;
     logic [$clog2(D)-1:0]rs1_addr, rs2_addr, rd_addr; //THESE ARE ADDRESSES NOT THE BUSES. DERIVED FROM INST
     logic [W-1:0] rd, rs1, rs2; //THESE ARE THE BUSES. ONLY ASSIGNED BY REGMOD. besides rd ofc
     logic [W-1:0] usable_rs1, usable_rs2;
+    
     
     assign rs1_addr = inst[19:15];
     assign rs2_addr = inst[24:20];
@@ -267,9 +266,6 @@ output logic illegal_out, tx
         endcase
     
     end
-   
-    
-   
     always_ff@(posedge clk) begin
         //pc logic is the first line per unique case where pc doesnt +4. 
          if (rst) illegal_seen <= 1'b0;
