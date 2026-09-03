@@ -26,16 +26,15 @@ Honestly, I kind of wish I had committed to a multistage design before the whole
 
 |                       | Single-Cycle       | Multicycle          |
 | --------------------- | ------------------ | ------------------- |
-| WNS                   | −0.305 ns @ 20 ns  | **+1.099 ns @ 10 ns** |
+| WNS                   | −0.305 ns @ 20 ns  | **+0.491 ns @ 10 ns** |
 | Data Path             | 13.238 ns          | **8.765 ns**        |
-| Logic Levels          | 20                 | **9**               |
 | Failing Endpoints     | 8 / 694            | **0 / 1740**        |
-| Slice LUTs            | 938                | **624**             |
-| Flip-Flops            | 63                 | 438                 |
+| Slice LUTs            | 938                | **622**             |
+| Flip-Flops            | 63                 | 472                 |
 | Latches               | 0                  | 0                   |
-| BRAM                   | 4                  | 7                   |
+| BRAM                   | 4                  | 8                   |
 
-These results are extremely satisfying.
+These results are extremely satisfying. The second stat is post-iplementation.
 
 The single-cycle design still has the obvious CPI advantage of completing an instruction in one clock cycle, but the multicycle core has a dramatically shorter critical path and can sustain a much faster clock. Once pipelining is implemented and multiple instructions can occupy those stages simultaneously, this architecture should start looking very pretty.
 
@@ -43,4 +42,6 @@ I am very happy with this result.
 
 There were a few synthesis problems along the way. Initially, BRAM and basically every module except `datapath` refused to synthesize because I had forgotten to drive several outputs.
 
-After fixing that, the BRAMs still refused to instantiate because the memories were empty and Vivado optimized them away. I added a memory initialization file, and after that all but one of the intended BRAM instances synthesized correctly.
+After fixing that, the BRAMs still refused to instantiate because the memories were empty and Vivado optimized them away. I added a memory initialization file, and after that all of the intended BRAM instances synthesized correctly.
+
+ A Python script generates the instructions and turns it into binary. She breathes, and it's on my Arty A7 100T. Via PuTTY, she's telling me hello a ton.
