@@ -6,21 +6,19 @@
 *.ip_user_files/
 *.runs/
 *.sim/
-*.srcs/*
-!stages/alu/alu.srcs/sources_1/
-stages/alu/alu.srcs/sources_1/*
-!stages/alu/alu.srcs/sources_1/new/
-!stages/alu/alu.srcs/sources_1/new/*.sv
 xsim.dir/
+
+# Generated content inside .srcs -- the sources themselves stay tracked
+*.srcs/utils_1/
+*.srcs/*/ip/
+*.srcs/*/bd/
 
 # Vivado project and session files
 *.xpr
 *.lpr
-vivado*.jou
-vivado*.log
-vivado*.str
-webtalk*.jou
-webtalk*.log
+*.jou
+*.log
+*.str
 webtalk*.xml
 usage_statistics_webtalk.xml
 
