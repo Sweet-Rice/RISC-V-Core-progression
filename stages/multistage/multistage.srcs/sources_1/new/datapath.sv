@@ -21,8 +21,12 @@
 
 //laying groundwork for pipelining. for now, just naiive multistage
 module datapath #(parameter  RESET_VEC = 32'h8000_0000, W =32, D = 64, DEEP = 4096, R =32 ) (
-    input logic clk, rst
+    input logic clk, rst,
+    output logic tx, illegal_out,
+    output logic [W-1:0 ]if_pc
     );
+    
+    
     
     logic if_stall, mem_stall; 
     logic if_mem_valid;
@@ -71,6 +75,7 @@ module datapath #(parameter  RESET_VEC = 32'h8000_0000, W =32, D = 64, DEEP = 40
         mem_en = 1'b0;
         wb_en = 1'b0;
         
+        next_state = ST_IF;
         case (current_state) 
             ST_IF: begin 
                 if (~if_stall)next_state = ST_ID;
@@ -109,7 +114,7 @@ module datapath #(parameter  RESET_VEC = 32'h8000_0000, W =32, D = 64, DEEP = 40
     
     logic [W-1:0] id_inst, if_inst;
     
-    logic [W-1:0] if_pc, id_pc;
+    logic [W-1:0] /*if_pc,*/ id_pc;
     logic [W-1:0] if_pc_alt;
     logic if_pc_sig;
     
@@ -122,11 +127,14 @@ module datapath #(parameter  RESET_VEC = 32'h8000_0000, W =32, D = 64, DEEP = 40
         end else if (~if_stall && if_en)begin
                 id_inst <= if_inst;
                 id_pc <= if_pc;
+                
+            end else if (wb_en) begin
                 if_pc <= (~if_pc_sig) ? if_pc + 32'd4 : if_pc_alt;
             end
+            
     end
     
-    fetch #(.W(W), .D(DEEP)) if_fetch (.fetch_sig(if_mem_valid),
+    fetch #(.W(W), .D(DEEP), .INIT_FILE("program.mem")) if_fetch (.fetch_sig(if_mem_valid),
                                         .addr(if_pc),
                                         .rst(rst), .clk(clk),
                                         .d_out(if_inst),
@@ -264,7 +272,7 @@ module datapath #(parameter  RESET_VEC = 32'h8000_0000, W =32, D = 64, DEEP = 40
     ///////////////////////////////////////
     //MEM Register Files
     logic [W-1:0] usable_memory, wb_memory, wb_result;
-    logic  mem_misaligned, tx;
+    logic  mem_misaligned; //tx;
     load_store #(.W(W), .D(DEEP)) lsu_d (   .addr(mem_result), .funct3(mem_funct3), 
                                             .is_store(mem_is_store), .rst(rst), .mem_valid(mem_mem_valid),
                                             .clk(clk), .d_in(mem_rs2_val), .d_out(usable_memory),
@@ -273,8 +281,10 @@ module datapath #(parameter  RESET_VEC = 32'h8000_0000, W =32, D = 64, DEEP = 40
     
     assign mem_mem_valid = mem_en && (mem_is_load || mem_is_store);
     assign mem_stall = mem_mem_valid && ~mem_mem_ready;
+    logic illegal_seen;
     always_ff @(posedge clk) begin
         if (rst) begin
+            
             wb_r_we    <= 1'b0;
             wb_illegal <= 1'b0;
             wb_wb_sel  <= 2'b00;
@@ -302,6 +312,13 @@ module datapath #(parameter  RESET_VEC = 32'h8000_0000, W =32, D = 64, DEEP = 40
             2'b10: wb_rd_in = wb_imm;
             default: wb_rd_in = wb_result;
         endcase
-        
     end
+    
+    
+    always_ff @(posedge clk) begin
+        if (rst)illegal_seen <= 1'b0;
+        else if (wb_en && wb_illegal) illegal_seen <=1'b1;
+    end
+        
+    assign illegal_out = illegal_seen; 
 endmodule

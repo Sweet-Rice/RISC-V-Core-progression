@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module fetch #(parameter W = 32, D = 4096)(
+module fetch #(parameter W = 32, D = 4096, INIT_FILE="")(
 input logic fetch_sig,
 input logic [W-1:0] addr,
 input logic rst, clk,
@@ -43,7 +43,7 @@ output logic mem_ready
     assign d_wr = '0;
 
 
-    memory_arr #(.W(W), .D(D)) mem_d (
+    memory_arr #(.W(W), .D(D), .INIT_FILE(INIT_FILE)) mem_d (
         .clk(clk), .word_addr(word_addr),
         .byte_we(byte_we), .d_wr(d_wr), .raw(raw));
     always_ff @(posedge clk) begin

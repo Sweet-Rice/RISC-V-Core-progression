@@ -20,16 +20,22 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module memory_arr #(parameter W=32, D = 4096 )(
+module memory_arr #(parameter W=32, D = 4096, INIT_FILE="" )(
 input logic clk,
 input logic [3:0] byte_we,
 input logic [W-1:0] d_wr,
 input logic [$clog2(D)-1:0] word_addr,
 output logic [W-1:0] raw
 );
+
+    logic [W-1:0] mem [D-1:0];
+    initial begin
+        if (INIT_FILE != "") $readmemh(INIT_FILE, mem);
+        
+        end
     //byte addressed memory 
     (* ram_style = "block" *)
-    logic [W-1:0] mem [D-1:0];
+    
     //byte addressed memory needs byte addressed w.e. per byte in word
     always_ff @(posedge clk) begin
     raw <= mem[word_addr];
